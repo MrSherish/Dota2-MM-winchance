@@ -14,6 +14,13 @@ def request_pro_matches(_max_id: int) -> dict:
 	return data
 
 
+def get_pro_players() -> list:
+	url = "https://api.opendota.com/api/proPlayers"
+	pro_players_games = urllib.request.urlopen(url).read().decode('utf8')
+	data = json.loads(pro_players_games)
+	return data
+
+
 def get_match_info(_match_id: int) -> dict:
 	url_match = "https://api.opendota.com/api/matches/{0}".format(_match_id)
 	req = urllib.request.Request(url_match)
