@@ -1,7 +1,7 @@
 import csv
 
-from scipy import random
-from sklearn.multiclass import OneVsRestClassifier
+from sklearn.cross_validation import cross_val_score
+from sklearn.ensemble import BaggingClassifier
 from sklearn.preprocessing import scale
 from sklearn.svm import SVC
 
@@ -9,21 +9,18 @@ import requests
 
 
 def classify(_train_data: list, _test_data: list):
-	print("umiem się")
-	svc = OneVsRestClassifier(SVC(kernel='linear', C=0.001, class_weight='balanced'), n_jobs=-1)
 	dota_x = list()
 	dota_y = list()
 	for _entry in _train_data:
-		dota_x.append(scale(_entry[1:-1]))
+		dota_x.append((_entry[1:-1]))
 		dota_y.append(_entry[-1])
-	svc.fit(X=dota_x, y=dota_y)
-	print("uczenie zakończone")
-	dota_x = list()
-	dota_y = list()
 	for _entry in _test_data:
-		dota_x.append(scale(_entry[1:-1]))
+		dota_x.append((_entry[1:-1]))
 		dota_y.append(_entry[-1])
-	print(svc.score(dota_x, dota_y))
+	dota_x = scale(dota_x)
+	svc = BaggingClassifier(SVC(kernel="rbf", class_weight='balanced', shrinking=True, probability=False))
+	scores = cross_val_score(svc, dota_x, dota_y, cv=10)
+	print(scores)
 
 
 def get_from_file(_filename="data.csv") -> list:
@@ -69,7 +66,7 @@ def get_from_web() -> list:
 # Pobieramy info o pro grach, o konkretnych meczach i tworzymy dwójkę gracza i jego osiągnięć w meczu
 if __name__ == "__main__":
 	data = get_from_file()
-	random.shuffle(data)
+	# random.shuffle(data)
 	train_data = data[:-10]
 	test_data = data[-10:]
 	classify(train_data, test_data)
