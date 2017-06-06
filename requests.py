@@ -1,6 +1,7 @@
 import json
 import urllib
 import urllib.request
+from urllib.error import HTTPError
 
 
 def request_pro_matches(_max_id: int) -> dict:
@@ -22,11 +23,15 @@ def get_pro_players() -> list:
 
 
 def get_match_info(_match_id: int) -> dict:
-	url_match = "https://api.opendota.com/api/matches/{0}".format(_match_id)
-	req = urllib.request.Request(url_match)
-	req.add_header('User-Agent', 'super happy dosBot')
-	match = urllib.request.urlopen(req).read().decode('utf8')
-	return json.loads(match)
+	for i in range(0, 5):
+		try:
+			url_match = "https://api.opendota.com/api/matches/{0}".format(_match_id)
+			req = urllib.request.Request(url_match)
+			req.add_header('User-Agent', 'Data Exploration project')
+			match = urllib.request.urlopen(req).read().decode('utf8')
+			return json.loads(match)
+		except HTTPError:
+			continue
 
 
 def get_player_recent_history(_player_id: int) -> dict:

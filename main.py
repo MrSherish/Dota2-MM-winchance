@@ -1,32 +1,48 @@
+import csv
+
 from scipy import random
-from sklearn import svm
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import scale
+from sklearn.svm import SVC
 
 import requests
 
 
-def classify(_train_data: list, _test_data: list) -> list:
-	svc = svm.SVC(kernel='poly', degree=3)
+def classify(_train_data: list, _test_data: list):
+	print("umiem się")
+	svc = OneVsRestClassifier(SVC(kernel='linear', C=0.001, class_weight='balanced'), n_jobs=-1)
 	dota_x = list()
 	dota_y = list()
 	for _entry in _train_data:
-		dota_x.append(_entry[1:-1])
+		dota_x.append(scale(_entry[1:-1]))
 		dota_y.append(_entry[-1])
 	svc.fit(X=dota_x, y=dota_y)
 	print("uczenie zakończone")
 	dota_x = list()
 	dota_y = list()
 	for _entry in _test_data:
-		dota_x.append(_entry[1:-1])
+		dota_x.append(scale(_entry[1:-1]))
 		dota_y.append(_entry[-1])
-	predicted = svc.predict(dota_x).tolist()
-	print("predicted: " + str(predicted))
-	print("ref:" + str(dota_y))
-	return predicted
+	print(svc.score(dota_x, dota_y))
 
 
-# Pobieramy info o pro grach, o konkretnych meczach i tworzymy dwójkę gracza i jego osiągnięć w meczu
-if __name__ == "__main__":
-	pro_games = random.choice(requests.request_pro_matches(90000000), 5)
+def get_from_file(_filename="data.csv") -> list:
+	with open(_filename, 'r') as file:
+		reader = csv.reader(file, quoting=csv.QUOTE_NONNUMERIC)
+		return list(reader)
+
+
+def write_to_csv(_data: list):
+	with open("data.csv", mode='w') as file:
+		for _row in _data:
+			data_row = str(_row[0])
+			for _entry in _row[1:]:
+				data_row += "," + str(_entry)
+			print(data_row, file=file)
+
+
+def get_from_web() -> list:
+	pro_games = requests.request_pro_matches(90000000)
 	pro_matches = map(lambda x: requests.get_match_info(x['match_id']), pro_games)
 	pro_players = [item['players'] for item in pro_matches]
 	pro_players = [item for sublist in pro_players for item in sublist]
@@ -47,7 +63,12 @@ if __name__ == "__main__":
 				row.append(0)  # nikt nie bije wież :(
 		row.append(entry[2])
 		data.append(row)
+	return data
 
+
+# Pobieramy info o pro grach, o konkretnych meczach i tworzymy dwójkę gracza i jego osiągnięć w meczu
+if __name__ == "__main__":
+	data = get_from_file()
 	random.shuffle(data)
 	train_data = data[:-10]
 	test_data = data[-10:]
